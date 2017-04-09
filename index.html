@@ -83,7 +83,7 @@
         var _arrN = function(n, ele) {
             var arr = [];
             for (var i = 0; i < n; ++i) {
-                arr.push(ele);
+                arr.push(ele || 0.0);
             }
             return arr;
         };
@@ -120,7 +120,7 @@
 
             var e = _arrN(n),
                 q = _arrN(n),
-                v = _arrN(n,_arrN(n,0.0));
+                v = _arrN(n,_arrN(n));
 
             // Householder's reduction to bidiagonal form
             var g = 0.0,
@@ -138,13 +138,13 @@
                 } else {
                     var f = u[i][i];
                     if (f < 0.0) {
-                        g = Math.sqrt(s);
+                        g =  Math.sqrt(s);
                     } else {
                         g = -Math.sqrt(s);
                     }
                     var h = f*g-s;
                     u[i][i] = f-g;
-                    for (var j = 1; j < n; ++j) {
+                    for (var j = l; j < n; ++j) {
                         s = 0.0;
                         for (var k = i; k < m; ++k) {
                             s += u[k][i]*u[k][j];
@@ -157,7 +157,7 @@
                 }
                 q[i] = g;
                 s = 0.0;
-                for (var j = 1; j < n; ++j) {
+                for (var j = l; j < n; ++j) {
                     s += u[i][j]*u[i][j];
                 }
                 if (s <= tol) {
@@ -171,14 +171,14 @@
                     }
                     h = f*g-s;
                     u[i][i+1] = f-g;
-                    for (var j = 1; j < n; ++j) {
+                    for (var j = l; j < n; ++j) {
                         e[j] = u[i][j]/h;
                     }
-                    s=0.0;
-                    for (var k = 1; k < n; ++k) {
+                    s = 0.0;
+                    for (var k = l; k < n; ++k) {
                         s += u[j][k]*u[i][k];
                     }
-                    for (var k = 1; k < n; ++k) {
+                    for (var k = l; k < n; ++k) {
                         u[j][k] += s*e[k];
                     }
                 }
@@ -190,20 +190,20 @@
             for (var i = n-1; i >= 0; --i) {
                 if (g != 0.0) {
                     h = g*u[i][i+1]
-                    for (var j = 1; j < n; ++j) {
+                    for (var j = l; j < n; ++j) {
                         v[j][i] = u[i][j]/h;
                     }
-                    for (var j = 1; j < n; ++j) {
+                    for (var j = l; j < n; ++j) {
                         s = 0.0;
-                        for (var k = 1; k < n; ++k) {
+                        for (var k = l; k < n; ++k) {
                             s += (u[i][k]*v[k][j]);
                         }
-                        for (var k = 1; k < n; ++k) {
+                        for (var k = l; k < n; ++k) {
                             v[k][j] += s*v[k][i];
                         }
                     }
                 }
-                for (var j = 1; j < n; ++j) {
+                for (var j = l; j < n; ++j) {
                     v[i][j] = 0.0;
                     v[j][i] = 0.0;
                 }
@@ -216,18 +216,18 @@
             for (var i = n-1; i >= 0; --i) {
                 l = i+1;
                 g = q[i];
-                for (var j = 1; j < n; ++j) {
+                for (var j = l; j < n; ++j) {
                     u[i][j] = 0.0;
                 }
                 if (g != 0.0) {
                     h = u[i][i]*g;
-                    for (var j = 1; j < n; ++j) {
+                    for (var j = l; j < n; ++j) {
                         s = 0.0;
-                        for (var k = 1; k < m; ++k) {
+                        for (var k = l; k < m; ++k) {
                             s += u[k][i]*u[k][j];
                         }
                         f = s/h;
-                        for (var k = 1; k < m; ++k) {
+                        for (var k = i; k < m; ++k) {
                             u[k][j] += f*u[k][i];
                         }
                     }
@@ -265,7 +265,7 @@
                         var c = 0.0,
                             s = 1.0,
                             l1 = l-1;
-                        for (var i = 1; i <= k; ++i) {
+                        for (var i = l; i <= k; ++i) {
                             f = s*e[i];
                             e[i] = c*e[i];
                             if (Math.abs(f) <= eps) {
