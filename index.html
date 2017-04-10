@@ -10,6 +10,36 @@
 <body>
     <script>
         "use strict";
+
+        // Pure JavaScript SVD algorithm.
+        // Input: 2-D list (m by n) with m >= n
+        // Output: U,W V so that A = U*W*VT
+        //
+        // -   Translated from python code by TANG ZhiXiong
+        // -   GitHub: https://github.com/district10/svd.js
+        // -   Origin: http://stitchpanorama.sourceforge.net/Python/svd.py
+        // -   FYI: http://stackoverflow.com/questions/960060/singular-value-decomposition-svd-in-php
+
+        var _writeDoc = true,
+            _document = "";
+
+        //
+        var _zeros = function(m, n) {
+            var arr = [];
+            for (var i = 0; i < m; ++i) {
+                if (n === undefined) {
+                    arr.push(0.0);
+                } else {
+                    var row = [];
+                    for (var j = 0; j < n; ++j) {
+                        row.push(0.0);
+                    }
+                    arr.push(row);
+                }
+            }
+            return arr;
+        };
+
         //
         var _clone = function (a) {
             var m = a.length,
@@ -61,9 +91,9 @@
                 cn = bn;
             var c;
             if (bn === 1) {
-                c = _arrN(cm,0.0);
+                c = _zeros(cm);
             } else {
-                c = _arrN(cm,_arrN(cn,0.0));
+                c = _zeros(cm,cn);
             }
             for (var i = 0; i < cm; ++i) {
                 for (var j = 0; j < cn; ++j) {
@@ -80,12 +110,41 @@
         };
 
         //
-        var _arrN = function(n, ele) {
-            var arr = [];
+        var _diag = function(arr) {
+            var n = arr.length;
+            var ret = _zeros(n,n);
             for (var i = 0; i < n; ++i) {
-                arr.push(ele || 0.0);
+                ret[i][i] = arr[i];
             }
-            return arr;
+            return ret;
+        };
+
+        //
+        var _toStr = function(a, before, after) {
+            var before = before || "",
+                after  = after || "";
+            return before + a.map(function(r){
+                if (Array.isArray(r)) {
+                    return r.map(function(e){ return (e).toFixed(4); }).join(", ");
+                } else {
+                    return (r).toFixed(4);
+                }
+            }).join("\n") + after;
+        };
+
+        //
+        var _print = function(a, before, after) {
+            var str;
+            if (Array.isArray(a)) {
+                str = _toStr(a,before,after);
+            } else {
+                str = a;
+            }
+            if (_writeDoc === true) {
+                _document += (str+"\n");
+            } else {
+                console.log(str);
+            }
         };
 
         //
@@ -103,24 +162,25 @@
             }
         };
 
-        var svd = function (a) {
+        var svd = function (a, options) {
             // Golub and Reinsch state that eps should not be smaller than the
             // machine precision, ie the smallest number
             // for which 1+e>1.  tol should be beta/e where beta is the smallest
             // positive number representable in the computer.
-            var eps = 1.e-15;
-            var tol = 1.e-64/eps;
+            var options = options || {};
+            var eps = options.eps || Number.EPSILON,
+                tol = options.tol || Number.MIN_VALUE/eps;
             if (1.0+eps<=1.0 || tol <= 0.0) {
                 return null;
             }
-            var itmax = 50;
+            var itmax = options.itmax || 50;
             var u = _clone(a);
             var m = a.length,
                 n = a[0].length;
 
-            var e = _arrN(n),
-                q = _arrN(n),
-                v = _arrN(n,_arrN(n));
+            var e = _zeros(n),
+                q = _zeros(n),
+                v = _zeros(n,n);
 
             // Householder's reduction to bidiagonal form
             var g = 0.0,
@@ -358,10 +418,41 @@
                 }
             }
 
-            // vt = transpose(v)
+            // vt = _trans(v)
             // return [u,q,vt]
             return [u,q,v];
         };
+
+        _print(
+            "Pure JavaScript SVD algorithm.\n" +
+            "Input: 2-D list (m by n) with m >= n\n" +
+            "Output: U,W V so that A = U*W*VT\n" +
+            "\n" +
+            "-   Translated from python code by TANG ZhiXiong\n" +
+            "-   GitHub: https://github.com/district10/svd.js\n" +
+            "-   Origin: http://stitchpanorama.sourceforge.net/Python/svd.py\n" +
+            "-   FYI: http://stackoverflow.com/questions/960060/singular-value-decomposition-svd-in-php\n\n\n");
+
+        _print( "Usage:\n" +
+                "       var a = [\n" +
+                "           [22.,10., 2.,  3., 7.],\n" +
+                "           [14., 7.,10.,  0., 8.],\n" +
+                "           [-1.,13.,-1.,-11., 3.],\n" +
+                "           [-3.,-2.,13., -2., 4.],\n" +
+                "           [ 9., 8., 1., -2., 4.],\n" +
+                "           [ 9., 1.,-7.,  5.,-1.],\n" +
+                "           [ 2.,-6., 6.,  5., 1.],\n" +
+                "           [ 4., 5., 0., -2., 2.]\n" +
+                "       ];\n" +
+                "       var ret = svd(a);\n" +
+                "       var u, w, v;\n" +
+                "       if (ret) {\n" +
+                "           u = ret[0];\n" +
+                "           w = ret[1];\n" +
+                "           v = ret[2];\n" +
+                "           _print(a);\n" +
+                "           _print(_mult(_mult(u,_diag(w)), _trans(v)));\n" +
+                "       }\n\n\n" );
 
         // u,w,vt = svd(a)
         var a = [
@@ -375,9 +466,22 @@
             [ 4., 5., 0., -2., 2.]
         ];
         var ret = svd(a);
-        var u = ret[0],
-            w = ret[1],
+        var u, w, v;
+        if (ret) {
+            u = ret[0];
+            w = ret[1];
             v = ret[2];
+            _print(a, "a: \n", "\n");
+            _print(u, "u: \n", "\n");
+            _print(w, "w: \n", "\n");
+            _print(v, "v: \n", "\n");
+            _print(_mult(_mult(u,_diag(w)), _trans(v)), "u*w*vt: \n", "\n");
+        } else {
+            _print(a, "failed at svd decomposing a = ");
+        }
+        if (_writeDoc) {
+            document.write("<div><pre><code>" + _document + "</code></pre></div>");
+        }
     </script>
 </body>
 </html>
