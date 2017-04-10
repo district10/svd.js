@@ -82,9 +82,10 @@ Usage:
         }
 
         function applySVD() {
+            a = [];
             var input = document.getElementById("input" );
             // parse a
-            var a = [], n = 0;
+            var n = 0;
             input.value.split(/\r\n|\r|\n/g).forEach(function(row){
                 row = row.replace(/\s|\t|\[|\]/g, "");
                 if (!row.startsWith("#")) {
@@ -106,6 +107,7 @@ Usage:
                 _document = "";
                 _print(a, "failed at svd decomposing a = \n");
                 document.getElementById("output").innerHTML = _document;
+                document.getElementById("ck").disabled = true;
             } else {
                 var u, w, v, t; // t for transposed
                 u = ret[0];
@@ -129,6 +131,7 @@ Usage:
                     _print(u_wv_t, "u*w*vt: \n", "\n");
                     _print(_diff(a,u_wv_t), "a-u*w*vt: \n", "\n");
                     document.getElementById("output").innerHTML = _document;
+                    document.getElementById("ck").disabled = false;
                 }
             }
         }
@@ -138,16 +141,19 @@ Usage:
     <div>
         <p>"\n" to sep rows, ", " to sep entries, "#" to add comment</p>
         <textarea id="input">
-# https://en.wikipedia.org/wiki/Singular_value_decomposition
-1,    0,    0,    0,    2
-0,    0,    3,    0,    0
-0,    0,    0,    0,    0
-0,    2,    0,    0,    0
+22, 10, 2, 3, 7
+14, 7, 10, 0, 8
+-1, 13, -1, -11, 3
+-3, -2, 13, -2, 4
+9, 8, 1, -2, 4
+9, 1, -7, 5, -1
+2, -6, 6, 5, 1
+4, 5, 0, -2, 2
         </textarea><br />
-        <button onclick="applySVD()">SVD</button>
-        <button onclick="sample1()">Sample Input 1</button>
-        <button onclick="sample2()">Sample Input 2</button>
-        <br />You can check the result via <a target="_blank" href="http://m.wolframalpha.com/input/?i=SVD+%7B%7B1%2C-2%7D%2C%7B0%2C1%7D%2C%7B-1%2C4%7D%7D&x=0&y=0">WolframAlpha</a>.
+        <button id="s1" onclick="sample1()">Sample Input 1</button>
+        <button id="s2" onclick="sample2()">Sample Input 2</button>
+        <button id="de" onclick="applySVD()">SVD</button>
+        <button id="ck" onclick="check()">Check</button>
     </div>
     <div><div><pre><code id="output"><script>if (_writeDoc) {document.write(_document);}</script></code></pre></div></div>
 
@@ -168,6 +174,16 @@ Usage:
                 "0, 1",
                 "-1, 4"
             ].join("\n");
+        }
+
+        function check() {
+            // http://m.wolframalpha.com/input/?i=SVD%20{{1,-2},{0,1},{-1,4}}
+            var url = "http://m.wolframalpha.com/input/?i=SVD%20";
+            url += "{" + a.map(function(r){
+                return "{"+r.join(",")+"}";
+            }).join(",") + "}";
+            window.open(url, '_blank');
+            window.focus();
         }
     </script>
 </body>
