@@ -145,10 +145,9 @@ var _print = function(a, before, after) {
     } else {
         str = a;
     }
-    if (_writeDoc === true) {
+    console.log(str);
+    if (_writeDoc === true && _document !== undefined) {
         _document += (str+"\n");
-    } else {
-        console.log(str);
     }
 };
 
