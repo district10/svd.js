@@ -424,6 +424,6 @@ var svd = function (a, options) {
         }
     }
 
-    // satisfy: a = u*diag(w)*trans(v)
+    // satisfy: a = u*w*vt, with w = _diag(q), vt = _trans(v), notice that u is not square
     return [u,q,v];
 };
