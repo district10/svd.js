@@ -75,6 +75,19 @@ var _trans = function (a) {
 };
 
 //
+var _diff = function(a, b) {
+    var m = a.length,
+        n = a[0].length;
+    var c = _zeros(m,n);
+    for (var i = 0; i < m; ++i) {
+        for (var j = 0; j < n; ++j) {
+            c[i][j] = a[i][j] - b[i][j];
+        }
+    }
+    return c;
+};
+
+//
 var _mult = function (a, b) {
     // Multiply two matrices
     // a must be two dimensional
@@ -180,9 +193,25 @@ var svd = function (a, options) {
         return null;
     }
     var itmax = options.itmax || 50;
-    var u = _clone(a);
+    var transposed = false;
+    if (!Array.isArray(a) || !Array.isArray(a[0])) {
+        return null;
+    }
     var m = a.length,
         n = a[0].length;
+    if (!(m >= n && n > 1)) {
+        if (options.robust === true && m < n && m > 1) {
+            // we can be robust here
+            a = _trans(a);
+            m = a.length;
+            n = a[0].length;
+            transposed = true;
+        } else {
+            // can't save you
+            return null;
+        }
+    }
+    var u = _clone(a);
 
     var e = _zeros(n),
         q = _zeros(n),
@@ -425,5 +454,5 @@ var svd = function (a, options) {
     }
 
     // satisfy: a = u*w*vt, with w = _diag(q), vt = _trans(v), notice that u is not square
-    return [u,q,v];
+    return [u,q,v, transposed];
 };

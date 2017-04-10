@@ -5,57 +5,54 @@
     <meta charset="utf-8">
     <meta name="viewport" content="user-scalable=no, initial-scale=1">
     <style>
+        #input {
+            min-width: 400px;
+            min-height: 300px;
+        }
+        textarea {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
+    <h1><a href="https://github.com/district10/svd.js">svd.js</a>: Pure JavaScript SVD</h1>
+    <div id="intro"><pre><code>
+Input: 2-D list (m by n) with m >= n
+Output: U,W V so that A = U*W*VT
+
+-   Translated from python code by TANG ZhiXiong
+-   GitHub: https://github.com/district10/svd.js
+-   Origin: http://stitchpanorama.sourceforge.net/Python/svd.py
+-   FYI: http://stackoverflow.com/questions/960060/singular-value-decomposition-svd-in-php
+
+Usage:
+       // &lt;script src="svd.js"&gt;&lt;/script&gt;
+       var a = [
+           [22.,10., 2.,  3., 7.],
+           [14., 7.,10.,  0., 8.],
+           [-1.,13.,-1.,-11., 3.],
+           [-3.,-2.,13., -2., 4.],
+           [ 9., 8., 1., -2., 4.],
+           [ 9., 1.,-7.,  5.,-1.],
+           [ 2.,-6., 6.,  5., 1.],
+           [ 4., 5., 0., -2., 2.]
+       ];
+       var ret = svd(a);
+       var u, w, v;
+       if (ret) {
+           u = ret[0];
+           w = ret[1];
+           v = ret[2];
+           _print(a);
+           _print(_mult(_mult(u,_diag(w)), _trans(v)));
+       }</code></pre></div>
+
     <script src="svd.js"></script>
     <script>
-        // Pure JavaScript SVD algorithm.
-        // Input: 2-D list (m by n) with m >= n
-        // Output: U,W V so that A = U*W*VT
-        //
-        // -   Translated from python code by TANG ZhiXiong
-        // -   GitHub: https://github.com/district10/svd.js
-        // -   Origin: http://stitchpanorama.sourceforge.net/Python/svd.py
-        // -   FYI: http://stackoverflow.com/questions/960060/singular-value-decomposition-svd-in-php
-
         "use strict";
 
-        var _writeDoc = true,
+        var _writeDoc = true, // so _print() will append output to _document
             _document = "";
-
-        _print(
-            "Pure JavaScript SVD algorithm.\n" +
-            "Input: 2-D list (m by n) with m >= n\n" +
-            "Output: U,W V so that A = U*W*VT\n" +
-            "\n" +
-            "-   Translated from python code by TANG ZhiXiong\n" +
-            "-   GitHub: https://github.com/district10/svd.js\n" +
-            "-   Origin: http://stitchpanorama.sourceforge.net/Python/svd.py\n" +
-            "-   FYI: http://stackoverflow.com/questions/960060/singular-value-decomposition-svd-in-php\n\n\n");
-
-        _print( "Usage:\n" +
-                "       var a = [\n" +
-                "           [22.,10., 2.,  3., 7.],\n" +
-                "           [14., 7.,10.,  0., 8.],\n" +
-                "           [-1.,13.,-1.,-11., 3.],\n" +
-                "           [-3.,-2.,13., -2., 4.],\n" +
-                "           [ 9., 8., 1., -2., 4.],\n" +
-                "           [ 9., 1.,-7.,  5.,-1.],\n" +
-                "           [ 2.,-6., 6.,  5., 1.],\n" +
-                "           [ 4., 5., 0., -2., 2.]\n" +
-                "       ];\n" +
-                "       var ret = svd(a);\n" +
-                "       var u, w, v;\n" +
-                "       if (ret) {\n" +
-                "           u = ret[0];\n" +
-                "           w = ret[1];\n" +
-                "           v = ret[2];\n" +
-                "           _print(a);\n" +
-                "           _print(_mult(_mult(u,_diag(w)), _trans(v)));\n" +
-                "       }\n\n\n" );
-
-        // u,w,vt = svd(a)
         var a = [
             [22.,10., 2.,  3., 7.],
             [14., 7.,10.,  0., 8.],
@@ -66,6 +63,7 @@
             [ 2.,-6., 6.,  5., 1.],
             [ 4., 5., 0., -2., 2.]
         ];
+        // [u,w,v] = svd(a)
         var ret = svd(a);
         var u, w, v;
         if (ret) {
@@ -76,12 +74,99 @@
             _print(u, "u: \n", "\n");
             _print(w, "w: \n", "\n");
             _print(v, "v: \n", "\n");
-            _print(_mult(_mult(u,_diag(w)), _trans(v)), "u*w*vt: \n", "\n");
+            var u_wv_t = _mult(_mult(u,_diag(w)), _trans(v));
+            _print(u_wv_t, "u*w*vt: \n", "\n");
+            _print(_diff(a,u_wv_t), "a-u*w*vt: \n", "\n");
         } else {
-            _print(a, "failed at svd decomposing a = ");
+            _print(a, "failed at svd decomposing a = \n");
         }
-        if (_writeDoc) {
-            document.write("<div><pre><code>" + _document + "</code></pre></div>");
+
+        function applySVD() {
+            var input = document.getElementById("input" );
+            // parse a
+            var a = [], n = 0;
+            input.value.split(/\r\n|\r|\n/g).forEach(function(row){
+                row = row.replace(/\s|\t|\[|\]/g, "");
+                if (!row.startsWith("#")) {
+                    row = row.split(",").filter(function(num){ return num.length !== 0});
+                    if (row.length !== 0) {
+                        if (n === 0) { n = row.length; }
+                        if (row.length === n) {
+                            var r = [];
+                            row.forEach(function(entry){
+                                r.push(Number(entry));
+                            });
+                            a.push(r);
+                        }
+                    }
+                }
+            });
+            var ret = svd(a, {robust: true});
+            if (!ret) {
+                _document = "";
+                _print(a, "failed at svd decomposing a = \n");
+                document.getElementById("output").innerHTML = _document;
+            } else {
+                var u, w, v, t; // t for transposed
+                u = ret[0];
+                w = ret[1];
+                v = ret[2];
+                t = ret[3];
+                // refresh page
+                {
+                    _document = "";
+                    if (t) { // transposed
+                        a = _trans(a);
+                    }
+                    _print(a, t?"# input (transposed to ensure m>=n)\n":"# input\n");
+                    input.value = _document;
+                    _document = "";
+                    _print(a, "a: \n", "\n");
+                    _print(u, "u: \n", "\n");
+                    _print(w, "w: \n", "\n");
+                    _print(v, "v: \n", "\n");
+                    var u_wv_t = _mult(_mult(u,_diag(w)), _trans(v));
+                    _print(u_wv_t, "u*w*vt: \n", "\n");
+                    _print(_diff(a,u_wv_t), "a-u*w*vt: \n", "\n");
+                    document.getElementById("output").innerHTML = _document;
+                }
+            }
+        }
+    </script>
+    <hr />
+    <h2>Try it</h2>
+    <div>
+        <p>"\n" to sep rows, ", " to sep entries, "#" to add comment</p>
+        <textarea id="input">
+# https://en.wikipedia.org/wiki/Singular_value_decomposition
+1,    0,    0,    0,    2
+0,    0,    3,    0,    0
+0,    0,    0,    0,    0
+0,    2,    0,    0,    0
+        </textarea><br />
+        <button onclick="applySVD()">SVD</button>
+        <button onclick="sample1()">Sample Input 1</button>
+        <button onclick="sample2()">Sample Input 2</button>
+    </div>
+    <div><div><pre><code id="output"><script>if (_writeDoc) {document.write(_document);}</script></code></pre></div></div>
+
+    <script>
+        function sample1() {
+            document.getElementById("input" ).value = [
+                "# http://web.mit.edu/be.400/www/SVD/Singular_Value_Decomposition.htm",
+                "2, 4",
+                "1, 3",
+                "0, 0",
+                "0, 0"
+            ].join("\n");
+        }
+        function sample2() {
+            document.getElementById("input" ).value = [
+                "# http://m.wolframalpha.com/input/?i=SVD+%7B%7B1%2C-2%7D%2C%7B0%2C1%7D%2C%7B-1%2C4%7D%7D&x=0&y=0",
+                "1, -2",
+                "0, 1",
+                "-1, 4"
+            ].join("\n");
         }
     </script>
 </body>
